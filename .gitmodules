@@ -1,0 +1,3 @@
+[submodule "alexforencich_uart"]
+	path = third_party/verilog-uart
+	url = https://github.com/alexforencich/verilog-uart.git
