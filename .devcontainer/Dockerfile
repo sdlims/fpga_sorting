@@ -11,3 +11,9 @@ RUN cd /tools && wget https://github.com/YosysHQ/oss-cad-suite-build/releases/do
 
 #install sv2v
 RUN cd /tools && wget https://github.com/zachjs/sv2v/releases/download/v0.0.12/sv2v-Linux.zip && unzip sv2v-Linux.zip && rm sv2v-Linux.zip
+
+#install Rust
+USER vscode
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/home/vscode/.cargo/bin:${PATH}"
+

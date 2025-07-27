@@ -1,3 +1,7 @@
 [submodule "alexforencich_uart"]
 	path = third_party/verilog-uart
 	url = https://github.com/alexforencich/verilog-uart.git
+
+[submodule "trace2power"]
+	path = third_party/trace2power
+	url = https://github.com/antmicro/trace2power.git
