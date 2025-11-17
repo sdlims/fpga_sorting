@@ -20,7 +20,7 @@ module counting_sort
 
 logic [DATA_WIDTH-1:0] IN    [DATA_SIZE];
 logic [DATA_WIDTH-1:0] OUT   [DATA_SIZE];
-logic [DATA_WIDTH-1:0] COUNT [MAX];
+logic [DATA_WIDTH-1:0] COUNT [MAX] = '{default: '0};
 
 
 
@@ -34,7 +34,7 @@ always_ff @(posedge clk_i) begin
         addr_dec_q <= DATA_SIZE - 1;
         sum_q <= 1;
         read_valid_o <= 0;
-        COUNT <= '{default: '0};
+        // COUNT <= '{default: '0};
     end else begin
         state_q <= state_d;
         addr_inc_q <= addr_inc_d;
