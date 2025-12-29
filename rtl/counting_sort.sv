@@ -20,7 +20,7 @@ module counting_sort
 
 logic [DATA_WIDTH-1:0] IN    [DATA_SIZE];
 logic [DATA_WIDTH-1:0] OUT   [DATA_SIZE];
-logic [DATA_WIDTH-1:0] COUNT [MAX] = '{default: '0};
+logic [DATA_WIDTH-1:0] COUNT [MAX];
 
 
 
@@ -33,14 +33,15 @@ always_ff @(posedge clk_i) begin
         addr_inc_q <= '0;
         addr_dec_q <= DATA_SIZE - 1;
         sum_q <= 1;
-        read_valid_o <= 0;
-        // COUNT <= '{default: '0};
+        for (int i = 0; i < MAX; i++)
+            COUNT[i] <= '0;
     end else begin
         state_q <= state_d;
         addr_inc_q <= addr_inc_d;
         addr_dec_q <= addr_dec_d;
         sum_q <= sum_d;
-        read_valid_o <= read_valid_d;
+        // if (state_q == 0 && write_valid_i && write_ready_o) IN[addr_inc_q] <= write_data_i;
+        if (state_q == 0) IN[addr_inc_q] <= write_data_i;
         if (inc_en) COUNT[temp_l] <= COUNT[temp_l] + 1;
         else if (sum_ready) COUNT[sum_q] <= COUNT[sum_q] + COUNT[sum_q - 1];
         else if (dec_en) begin
@@ -50,34 +51,76 @@ always_ff @(posedge clk_i) begin
     end
 end
 
+logic [0:0] read_o, read_en, read_val;
+always_ff @(posedge clk_i) begin
+    if (rst_i) begin
+        read_o <= 1'b0;
+    end else if (read_en) begin
+        read_o <= read_val;
+    end
+end
+
+logic [$clog2(DATA_SIZE):0] out_addr_q, out_addr_d;
+always_ff @(posedge clk_i) begin
+    if (rst_i) begin
+        out_addr_q <= '0;
+    end else if (state_q == 0) begin
+        out_addr_q <= out_addr_d;
+    end
+end
+
+always_comb begin
+    read_en = 1'b0;
+    read_val = 1'b0;
+
+    if ((state_q == 0) && (out_addr_q == DATA_SIZE)) begin
+        read_en = 1'b1;
+        read_val = 1'b0;
+    end else if ((state_q == 3) && addr_dec_q == 0) begin
+        read_en = 1'b1;
+        read_val = 1'b1;
+    end
+end
 
 logic [DATA_WIDTH-1:0] temp_l;
-logic inc_en;
+logic [0:0] inc_en;
 always_comb begin
     state_d = state_q; 
     write_ready_o = 0;
+    out_addr_d = out_addr_q;
     addr_inc_d = addr_inc_q;
     temp_l = 0;
     inc_en = 0;
+    read_valid_o = 1'b0;
+
+    read_data_o = '0;
 
     case (state_q) 
         0 : begin
             write_ready_o = 1;
             state_d = 0;
-            
-            if (write_valid_i && write_ready_o) begin
-                IN[addr_inc_q] = write_data_i;
-                if (addr_inc_q == DATA_SIZE - 1) begin
-                    addr_inc_d = '0;
-                    state_d = 1;
-
+            if (read_o) begin
+                if (out_addr_q == DATA_SIZE) begin
+                    out_addr_d = '0;
+                    read_data_o = '0;
                 end else begin
-                    addr_inc_d = addr_inc_q + 1;
-                    write_ready_o = 0;
-                    state_d = 0;
-
+                    read_data_o = OUT[out_addr_q];
+                    out_addr_d = out_addr_q + 1;
+                    read_valid_o = 1'b1;
                 end
+            end
+            else begin
+                if (write_valid_i && write_ready_o) begin
+                    if (addr_inc_q == DATA_SIZE - 1) begin
+                        addr_inc_d = '0;
+                        state_d = 1;
 
+                    end else begin
+                        addr_inc_d = addr_inc_q + 1;
+                        write_ready_o = 0;
+                        state_d = 0;
+                    end
+                end
             end
         end
         
@@ -104,7 +147,7 @@ always_comb begin
 
         3 : begin
             state_d = 3;
-            if (read_valid_o) begin
+            if (addr_dec_q == 0) begin //read_valid_o
                 state_d = 0;
             end
         end
@@ -136,19 +179,16 @@ end
 
 // STATE 3 LOGIC ====================
 logic dec_en;
-logic read_valid_d;
 logic [$clog2(DATA_SIZE):0] addr_dec_d, addr_dec_q;
 
 always_comb begin
     dec_en = 0;
     addr_dec_d = addr_dec_q;
-    read_valid_d = 0;
     if (state_q == 3) begin
         dec_en = 1;
         if (addr_dec_q == 0) begin
             dec_en = 1;
             addr_dec_d = DATA_SIZE - 1;
-            read_valid_d = 1;
 
         end else begin
             dec_en = 1;
