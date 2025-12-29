@@ -1,5 +1,5 @@
 TOP := tb
-RTL_TOP := uart_comm
+RTL_TOP := counting_sort
 
 export YOSYS_DATDIR := $(shell yosys-config --datdir)
 export ALEX_UART_DIR = $(abspath third_party/verilog-uart)
@@ -13,8 +13,10 @@ SV2V_ARGS := $(shell \
  python3 misc/convert_filelist.py sv2v rtl/rtl.f \
 )
 
-
 .PHONY: lint sim synth clean
+
+dependencies:
+	git submodule update --init --recursive
 
 lint: 
 	verilator lint.vlt -f rtl/rtl.f -f dv/dv.f --lint-only --top $(RTL_TOP)
