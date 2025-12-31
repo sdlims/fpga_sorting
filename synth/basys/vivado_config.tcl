@@ -1,0 +1,1 @@
+part = XC7A35T-1CPG236C
