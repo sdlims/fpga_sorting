@@ -1,6 +1,6 @@
 module icebreak_runner ();
 
-localparam DATA_WIDTH = 5;
+localparam DATA_WIDTH = 8;
 localparam DATA_SIZE = 4;
 
 localparam ClockPeriod = 21.0526316ns;
