@@ -1,1 +1,1 @@
-part = XC7A35T-1CPG236C
+set part xc7a35tcpg236-1
