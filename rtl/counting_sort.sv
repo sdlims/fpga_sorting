@@ -2,8 +2,8 @@
 
 module counting_sort 
 #(
-    parameter DATA_WIDTH = 5,
-    parameter DATA_SIZE = 4,
+    parameter DATA_WIDTH = 8,
+    parameter DATA_SIZE = 8,
     parameter MAX = 32
 )(
     input   logic [0:0]                       clk_i,
@@ -19,13 +19,26 @@ module counting_sort
 );
 
 logic [DATA_WIDTH-1:0] IN    [DATA_SIZE];
-logic [DATA_WIDTH-1:0] OUT   [DATA_SIZE];
+// logic [DATA_WIDTH-1:0] OUT   [DATA_SIZE];
 logic [DATA_WIDTH-1:0] COUNT [MAX];
-
 
 
 logic [1:0] state_d, state_q;
 logic [$clog2(DATA_SIZE):0] addr_inc_d, addr_inc_q;
+
+
+  ram_1r1w_sync #(.width_p(DATA_WIDTH), .depth_p(1 << DATA_SIZE)) 
+  ram_inst 
+  (.clk_i(clk_i), 
+  .reset_i(rst_i), 
+  .wr_valid_i(dec_en), 
+  .wr_data_i(IN[addr_dec_q]), 
+  .wr_addr_i(COUNT[IN[addr_dec_q]] - 1), 
+  .rd_valid_i(read_o), 
+  .rd_addr_i(out_addr_q), 
+  .rd_data_o(read_data_o)
+  );
+
 
 always_ff @(posedge clk_i) begin
     if (rst_i) begin
@@ -45,7 +58,7 @@ always_ff @(posedge clk_i) begin
         if (inc_en) COUNT[temp_l] <= COUNT[temp_l] + 1;
         else if (sum_ready) COUNT[sum_q] <= COUNT[sum_q] + COUNT[sum_q - 1];
         else if (dec_en) begin
-            OUT[COUNT[IN[addr_dec_q]] - 1] <= IN[addr_dec_q];
+            // OUT[COUNT[IN[addr_dec_q]] - 1] <= IN[addr_dec_q];
             COUNT[IN[addr_dec_q]] <= COUNT[IN[addr_dec_q]] - 1;
         end
     end
@@ -73,7 +86,7 @@ always_comb begin
     read_en = 1'b0;
     read_val = 1'b0;
 
-    if ((state_q == 0) && (out_addr_q == DATA_SIZE)) begin
+    if ((state_q == 0) && (out_addr_q == DATA_SIZE-1)) begin
         read_en = 1'b1;
         read_val = 1'b0;
     end else if ((state_q == 3) && addr_dec_q == 0) begin
@@ -93,7 +106,7 @@ always_comb begin
     inc_en = 0;
     read_valid_o = 1'b0;
 
-    read_data_o = '0;
+    // read_data_o = '0;
 
     case (state_q) 
         0 : begin
@@ -102,9 +115,9 @@ always_comb begin
             if (read_o) begin
                 if (out_addr_q == DATA_SIZE) begin
                     out_addr_d = '0;
-                    read_data_o = '0;
+                    // read_data_o = '0;
                 end else begin
-                    read_data_o = OUT[out_addr_q];
+                    // read_data_o = OUT[out_addr_q];
                     out_addr_d = out_addr_q + 1;
                     read_valid_o = 1'b1;
                 end
@@ -147,7 +160,7 @@ always_comb begin
 
         3 : begin
             state_d = 3;
-            if (addr_dec_q == 0) begin //read_valid_o
+            if (addr_dec_q == 0) begin
                 state_d = 0;
             end
         end
