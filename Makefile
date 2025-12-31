@@ -1,5 +1,6 @@
 TOP := tb
 RTL_TOP := counting_sort
+FPGA = icestorm_icebreaker
 
 export YOSYS_DATDIR := $(shell yosys-config --datdir)
 export ALEX_UART_DIR = $(abspath third_party/verilog-uart)
@@ -57,6 +58,12 @@ synth/icestorm_icebreaker/build/icebreaker.asc: synth/icestorm_icebreaker/build/
 	 --pre-pack synth/icestorm_icebreaker/icebreaker.py \
 	 --pcf synth/icestorm_icebreaker/icebreaker.pcf \
 	 --asc $@
+
+vivado: synth/build/rtl.sv2v.v # Uses rtl.sv2v in general build dir
+	rm -rf synth/${FPGA}/build/project
+	mkdir -p synth/${FPGA}/build
+	cd synth/${FPGA}/build  && \
+	 vivado -nolog -nojournal -tempDir . -mode batch -source ../../../yosys_common/create_xpr.tcl -tclargs $<
 
 %.bit: %.asc
 	icepack $< $@
