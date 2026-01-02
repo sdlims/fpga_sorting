@@ -1,20 +1,22 @@
 `timescale 1ns / 1ps
-
+// Could be optimized as we should be overwritting IN data. Send IN to RAM, overwrite later
 module counting_sort 
 #(
     parameter DATA_WIDTH = 8,
-    parameter DATA_SIZE = 8,
-    parameter MAX = 32
+    parameter DATA_SIZE = 4,
+    parameter MAX = 16 // equal to 1 << DATA_SIZE
 )(
     input   logic [0:0]                       clk_i,
     input   logic [0:0]                       rst_i,
 
     input   logic [0:0]                       write_valid_i,
     output  logic [0:0]                       write_ready_o,
+    input   logic [0:0]                       write_done_i,
     input   logic [DATA_WIDTH-1:0]            write_data_i,
 
     input   logic [0:0]                       read_ready_i,
     output  logic [0:0]                       read_valid_o,
+    input   logic [0:0]                       read_done_i,
     output  logic [DATA_WIDTH-1:0]            read_data_o
 );
 
@@ -104,7 +106,6 @@ always_comb begin
     addr_inc_d = addr_inc_q;
     temp_l = 0;
     inc_en = 0;
-    read_valid_o = 1'b0;
 
     // read_data_o = '0;
 
@@ -116,23 +117,19 @@ always_comb begin
                 if (out_addr_q == DATA_SIZE) begin
                     out_addr_d = '0;
                     // read_data_o = '0;
-                end else begin
+                end else if (read_done_i) begin
                     // read_data_o = OUT[out_addr_q];
                     out_addr_d = out_addr_q + 1;
-                    read_valid_o = 1'b1;
                 end
             end
             else begin
                 if (write_valid_i && write_ready_o) begin
-                    if (addr_inc_q == DATA_SIZE - 1) begin
-                        addr_inc_d = '0;
-                        state_d = 1;
-
-                    end else begin
-                        addr_inc_d = addr_inc_q + 1;
-                        write_ready_o = 0;
-                        state_d = 0;
-                    end
+                    addr_inc_d = addr_inc_q + 1;
+                    state_d = 0;
+                end else if ((addr_inc_q == DATA_SIZE - 1) && write_done_i) begin
+                    write_ready_o = 0;
+                    addr_inc_d = '0;
+                    state_d = 1;
                 end
             end
         end
