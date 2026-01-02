@@ -63,7 +63,7 @@ vivado: synth/build/rtl.sv2v.v # Uses rtl.sv2v in general build dir
 	rm -rf synth/${FPGA}/build/project
 	mkdir -p synth/${FPGA}/build
 	cd synth/${FPGA}/build  && \
-	 vivado -nolog -nojournal -tempDir . -mode batch -source ../../../yosys_common/create_xpr.tcl -tclargs $<
+	 vivado -nolog -nojournal -tempDir . -mode batch -source ../../yosys_generic/create_xpr.tcl -tclargs $< ${FPGA}
 
 %.bit: %.asc
 	icepack $< $@
